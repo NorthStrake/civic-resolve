@@ -1,0 +1,67 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Issue {
+  id                      String   @id // e.g. CR-2026-1042
+  title                   String
+  description             String
+  category                String   // Pothole/Road Damage, Garbage/Sanitation, Streetlight, Water Leakage/Supply, Drainage/Sewage, Electricity, Public Safety, Other
+  subcategory             String?
+  urgency                 String   // Critical, High, Medium, Low
+  impactScore             Int      @default(50) // 0-100
+  status                  String   @default("REPORTED") // REPORTED, IN_PROGRESS, RESOLVED, REJECTED
+  latitude                Float
+  longitude               Float
+  address                 String
+  ward                    String
+  imageUrl                String?
+  resolvedImageUrl        String?  // Before/after resolution proof
+  assignedDepartment      String   // e.g. Roads & Highways
+  departmentConfidence    Float    @default(0.9)
+  departmentReasoning     String
+  oneLineSummary          String?
+  suggestedAction         String?
+  estimatedResolutionHours Int     @default(48)
+  slaDeadline             DateTime
+  isOverdue               Boolean  @default(false)
+  citizenName             String   @default("Anonymous Citizen")
+  citizenPhone            String?
+  upvotesCount            Int      @default(1)
+  aiModelUsed             String   @default("Gemini 2.5 Flash")
+  userOverridden          Boolean  @default(false)
+  overrideDetails         String?
+  officialRemarks         String?
+  resolvedAt              DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  statusAudits            StatusAudit[]
+  duplicateVotes          DuplicateVote[]
+}
+
+model StatusAudit {
+  id             String   @id @default(uuid())
+  issueId        String
+  previousStatus String?
+  newStatus      String
+  changedBy      String
+  remarks        String?
+  timestamp      DateTime @default(now())
+
+  issue          Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+model DuplicateVote {
+  id         String   @id @default(uuid())
+  issueId    String
+  citizenId  String
+  createdAt  DateTime @default(now())
+
+  issue      Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
